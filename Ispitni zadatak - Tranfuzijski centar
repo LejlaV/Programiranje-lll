@@ -1,0 +1,493 @@
+#include <iostream>
+using namespace std;
+char* AlocirajNizKaraktera(const char *s) {
+	char *noviString = new char[strlen(s) + 1];
+	strcpy_s(noviString, strlen(s) + 1, s);
+	return noviString;
+}
+
+const char *crt = "\n-------------------------------------------\n";
+enum OznakaKrvneGrupe { O, A, B, AB };
+const char* OznakaKrvneGrupeString[] = { "O", "A", "B", "AB" };
+
+class Datum {
+	int _dan, _mjesec, _godina;
+public:
+	Datum(int dan=1, int mjesec=1, int godina=2000) :
+		_dan(dan), _mjesec(mjesec), _godina(godina) {}
+	friend ostream &operator<<(ostream &COUT, const Datum &obj) {
+		COUT << obj._dan << "." << obj._mjesec << "." << obj._godina << endl;
+		return COUT;
+	}
+
+};
+
+template <class T>
+class Kolekcija {
+	T* _elementi;
+	int _trenutno;
+public:
+	Kolekcija() {
+		_elementi = nullptr;
+		_trenutno = 0;
+		
+	}
+	Kolekcija(const Kolekcija &temp) {
+		_trenutno = temp._trenutno;
+	
+		_elementi = new T[_trenutno];
+		
+
+		for (int i = 0; i < _trenutno; i++)
+			_elementi[i] = temp._elementi[i];
+	
+	}
+	Kolekcija& operator=(const Kolekcija &temp) {
+		if (this != &temp) {
+			_trenutno = temp._trenutno;
+
+
+
+			delete[] _elementi;
+			_elementi = new T[_trenutno];
+
+			for (size_t i = 0; i < _trenutno; i++)
+				_elementi[i] = temp._elementi[i];
+
+		}
+		return *this;
+	}
+	void Dodaj(T temp) {
+		T *tempElementi = new T[_trenutno + 1];
+		for (size_t i = 0; i < _trenutno; i++)
+			tempElementi[i] = _elementi[i];
+		tempElementi[_trenutno] = temp;
+
+		_trenutno++; //povecaj broj elemenata
+		delete[] _elementi; //obrisi stare elemente
+		_elementi = tempElementi; //preusmjeri pointer na novi niz
+	}
+
+
+
+	int GetTrenutno() const { return _trenutno; }
+
+
+	T& GetElement1(int lokacija) const {
+		return _elementi[lokacija];
+	}
+	T& GetLast()
+	{
+		return _elementi[_trenutno - 1];
+	}
+
+	friend ostream &operator<<(ostream &COUT, const Kolekcija &obj) {
+		for (size_t i = 0; i < obj.GetTrenutno(); i++)
+			COUT << obj.GetElement1(i) << endl;
+		return COUT;
+	}
+};
+
+class KrvnaGrupa {
+	/*postoje 4 krvne grupe koje su navedene u enumeracije OznakaKrvneGrupe, pri cemu svaka od navedenih moze imati pozitivan (+) i negativan (-) Rh faktor*/
+	OznakaKrvneGrupe _oznaka;//npr: AB
+	char _rhFaktor; // + ili -
+					/*prethodno pomenuto je izuzetno bitno iz razloga sto postoje jasna pravila vezana za darivanje krvi tj. koji primalac moze primiti krv od kojeg donatora sto je prikazano u tabeli, a naredna dvije kolekcije su zaduzena da cuvaju informacije o tome, npr. za krvnu grupu A+ kolekcija donatori ce cuvati vrijednosti: A+ i AB+ */
+	Kolekcija<KrvnaGrupa> _donatori; //krvne grupe kojima odredjena krvna grupa moze donirati krv.
+	Kolekcija<KrvnaGrupa> _primaoci; //krvne grupe od kojih odredjena krvna grupa moze primiti krv.
+	int _zalihe;//zalihe krve grupe
+public:
+	KrvnaGrupa()
+	{
+
+	}
+	KrvnaGrupa(OznakaKrvneGrupe oznaka, const char rhFaktor) :
+		_oznaka(oznaka), _rhFaktor(rhFaktor),_zalihe(0) {}
+	void SetDonatori(Kolekcija<KrvnaGrupa> donatori) {
+		_donatori = donatori;
+	}
+	void SetPrimaoci(Kolekcija<KrvnaGrupa> primaoci) {
+		_primaoci = primaoci;
+	}
+	void SetZalihe(int zalihe) {
+		_zalihe+= zalihe;
+	}
+	int GetZalihe() { return _zalihe; }
+	bool operator ==(const KrvnaGrupa &kg) {
+		if (_oznaka == kg._oznaka && _rhFaktor == kg._rhFaktor) return true;
+		return false;
+	}
+	Kolekcija<KrvnaGrupa> GetPrimaoci() { return _primaoci; }
+	Kolekcija<KrvnaGrupa> GetDonatori() { return _donatori; }
+	friend ostream &operator<<(ostream &cout, const KrvnaGrupa &obj) {
+		cout << crt << "Krvna grupa -> " << OznakaKrvneGrupeString[obj. _oznaka ]<< " " << obj._rhFaktor << crt;
+		cout << "Donatori: ";
+		for (int i = 0; i <obj. _donatori.GetTrenutno(); i++)
+			cout <<OznakaKrvneGrupeString[obj._donatori.GetElement1(i)._oznaka] <<obj. _donatori.GetElement1(i)._rhFaktor << ", ";
+
+		cout << endl << "Primaoci -> ";
+		for (int i = 0; i < obj._primaoci.GetTrenutno(); i++)
+			cout <<OznakaKrvneGrupeString[obj._primaoci.GetElement1(i)._oznaka] <<obj. _primaoci.GetElement1(i)._rhFaktor << ", ";
+		cout << crt;
+		cout << obj._zalihe;
+
+		return cout;
+	}
+	void Ispis()const {
+		
+		cout << crt << "Krvna grupa -> " << _oznaka << " " << _rhFaktor << crt;
+		cout << "Donatori: ";
+		for (int i=0; i <_donatori.GetTrenutno(); i++)
+			cout << _donatori.GetElement1(i)._oznaka << _donatori.GetElement1(i)._rhFaktor << ", ";
+
+		cout << endl << "Primaoci -> ";
+		for (int i = 0; i < _primaoci.GetTrenutno(); i++)
+			cout << _primaoci.GetElement1(i)._oznaka << _primaoci.GetElement1(i)._rhFaktor << ", ";
+		cout<< crt;
+		
+	}
+};
+
+//Klasu proglasiti apstraktnom
+class Osoba {
+protected:
+	char* _imePrezime;
+	KrvnaGrupa _krvnaGrupa;
+public:
+	Osoba(const char* imePrezime, KrvnaGrupa krvnaGrupa) : _krvnaGrupa(krvnaGrupa) {
+		_imePrezime = AlocirajNizKaraktera(imePrezime);
+
+	}
+	Osoba(const Osoba &o) :_krvnaGrupa(o._krvnaGrupa) {
+		_imePrezime = AlocirajNizKaraktera(o._imePrezime);
+	}
+	Osoba& operator=(const Osoba& o)
+	{
+		if (this != &o)
+		{
+			_krvnaGrupa = o._krvnaGrupa;
+			delete[] _imePrezime;
+			_imePrezime = AlocirajNizKaraktera(o._imePrezime);
+		}
+		return *this;
+	}
+	virtual void Info() = 0;
+	virtual ~Osoba() {
+		delete[] _imePrezime;
+		_imePrezime = nullptr;
+	}
+	KrvnaGrupa GetKrvnaGrupa()const { return _krvnaGrupa; }
+	bool operator == (const Osoba &o) {
+		return strcmp(_imePrezime, o._imePrezime) == 0;
+	}
+
+};
+
+class Donator : public Osoba {
+	char* _telefon; 
+	Datum _datumPosljednjegDoniranja;
+	bool _podsjetiMe;
+	bool _kontaktirajMe;
+	float _doniranokrvi;//zalihe krve grupe
+
+
+public:
+	Donator(const char* imePrezime, KrvnaGrupa krvnaGrupa, const char* telefon, Datum dpd, bool remind = true, bool contact = true)
+		: Osoba(imePrezime, krvnaGrupa), _datumPosljednjegDoniranja(dpd),_doniranokrvi(0) {
+		_telefon = AlocirajNizKaraktera(telefon);
+	}
+	Donator(const Donator &d) :Osoba(d), _datumPosljednjegDoniranja(d._datumPosljednjegDoniranja),
+		_podsjetiMe(d._podsjetiMe), _kontaktirajMe(d._kontaktirajMe) {
+		_telefon = AlocirajNizKaraktera(d._telefon);
+	
+	}
+	Donator& operator=(const Donator& d)
+	{
+		if (this != &d)
+		{
+			_datumPosljednjegDoniranja = d._datumPosljednjegDoniranja;
+			_podsjetiMe = d._podsjetiMe;
+			_kontaktirajMe = d._kontaktirajMe;
+			delete[]_telefon;
+			_telefon = AlocirajNizKaraktera(d._telefon);
+		}
+		return *this;
+	}
+	void Info()
+	{
+		cout << _imePrezime << endl;
+		cout << _telefon << endl;
+		cout << _datumPosljednjegDoniranja << endl;
+		cout << _doniranokrvi << endl;
+
+	}
+	void setDatumPosljednjegDoniranja(Datum d) {
+		_datumPosljednjegDoniranja = d;
+	}
+	void SetDoniranuKrv(float kolicina) {
+		_doniranokrvi+= kolicina;
+	}
+	float GetDoniranuKrv() { return _doniranokrvi; }
+
+	~Donator()
+	{
+		delete[]_telefon;
+		_telefon = nullptr;
+	}
+};
+
+class Zahtjev {
+	char* _ustanova;
+	Datum _datumZahtjeva;
+	KrvnaGrupa _krvnaGrupa;
+	double _kolicina;
+public:
+	Zahtjev()
+	{
+		_ustanova = nullptr;
+	}
+	Zahtjev(const char* ustanova, Datum datum, KrvnaGrupa krvnaGrupa, float kolicina) :
+		 _datumZahtjeva(datum), _krvnaGrupa(krvnaGrupa), _kolicina(kolicina) {
+		_ustanova = AlocirajNizKaraktera(ustanova);
+	}
+	Zahtjev(const Zahtjev& obj)
+	{
+		_datumZahtjeva = obj._datumZahtjeva;
+		_krvnaGrupa = obj._krvnaGrupa;
+		_kolicina = obj._kolicina; 
+			_ustanova = AlocirajNizKaraktera(obj._ustanova);
+	}
+	Zahtjev& operator=(Zahtjev& obj)
+	{
+		if (this != &obj)
+		{
+			_datumZahtjeva = obj._datumZahtjeva;
+			_krvnaGrupa = obj._krvnaGrupa;
+			_kolicina = obj._kolicina;
+			delete[]_ustanova;
+			_ustanova = AlocirajNizKaraktera(obj._ustanova);
+
+		}
+		return *this;
+
+	}
+
+	friend ostream& operator<<(ostream& COUT, const Zahtjev& obj) {
+		COUT << "Ustanova: " << obj._ustanova << endl;
+		COUT << "Datum: " << obj._datumZahtjeva << endl;
+		COUT << "Krvna grupa: " <<obj._krvnaGrupa << endl;
+		COUT << "Kolicina: " << obj._kolicina << endl;
+		return COUT;
+	}
+	double GetKolicina() { return _kolicina; }
+
+	~Zahtjev()
+	{
+		delete[]_ustanova; _ustanova = nullptr;
+	}
+	KrvnaGrupa GetKrvnaGrupa() { return _krvnaGrupa; }
+
+};
+
+class TransfuzijskiCentar {
+	//stanje zaliha za svaku pojedinu krvnu grupu
+	Kolekcija<KrvnaGrupa*> _zalihe;
+	//evidentira svaku donaciju krvi
+	Kolekcija<Osoba *> _donacije;
+	Kolekcija<Zahtjev> _zahtjevi;
+public:
+
+	bool AddDonaciju(Datum d, Osoba *o, float kolicina) {
+		bool postojiKrvnaGrupa = false;
+		for (size_t i = 0; i < _zalihe.GetTrenutno(); i++)
+		{
+			if (*_zalihe.GetElement1(i) == o->GetKrvnaGrupa()) {
+				(*_zalihe.GetElement1(i)).SetZalihe(kolicina);
+				postojiKrvnaGrupa = true;
+			}
+		}
+		if (!postojiKrvnaGrupa)
+			_zalihe.Dodaj(new KrvnaGrupa(o->GetKrvnaGrupa()));
+
+		Donator *donator = dynamic_cast<Donator*>(o);
+		for (size_t i = 0; i < _donacije.GetTrenutno(); i++)
+		{
+			if (*_donacije.GetElement1(i) == *o) {
+				Donator *donator =dynamic_cast<Donator*>(_donacije.GetElement1(i));
+				donator->setDatumPosljednjegDoniranja(d);
+				donator->SetDoniranuKrv(kolicina);
+				
+				return true;
+			}
+		}
+		_donacije.Dodaj(new Donator(*donator));
+		Donator *don = dynamic_cast<Donator*>(_donacije.GetLast());
+		don->SetDoniranuKrv(kolicina);
+
+
+		return true;
+	}
+	bool DodajZahtjev(Zahtjev& z) {
+		bool imaZaliha = false;
+		for (size_t i = 0; i < _zalihe.GetTrenutno(); i++)
+		{
+			for (size_t j = 0; j < z.GetKrvnaGrupa().GetPrimaoci().GetTrenutno(); j++)
+			{
+				if (*_zalihe.GetElement1(i) == z.GetKrvnaGrupa().GetPrimaoci().GetElement1(j) && (*_zalihe.GetElement1(i)).GetZalihe()>= z.GetKolicina()) {
+					imaZaliha = true;
+					(*_zalihe.GetElement1(i)).SetZalihe((*_zalihe.GetElement1(i)).GetZalihe() - z.GetKolicina());
+					break;
+				}
+			}
+		}
+		if (!imaZaliha) {
+			cout << "Tranfuzijski centar nema dovoljno krvi";
+			return false;
+		}
+		_zahtjevi.Dodaj(z);
+		return true;
+
+	}
+	friend ostream &operator<<(ostream &COUT, const TransfuzijskiCentar &obj) {
+		
+		for (size_t i = 0; i < obj._zalihe.GetTrenutno(); i++)
+		{
+			COUT << *obj._zalihe.GetElement1(i);
+		}
+		for (size_t i = 0; i < obj._donacije.GetTrenutno(); i++)
+		{
+		 (*obj._donacije.GetElement1(i)).Info();
+		}
+		return COUT;
+	}
+	~TransfuzijskiCentar()
+	{
+		for (size_t i = 0; i < _zalihe.GetTrenutno(); i++)
+		{
+			delete _zalihe.GetElement1(i);
+		}
+		for (size_t i = 0; i < _donacije.GetTrenutno(); i++)
+		{
+			delete _donacije.GetElement1(i);
+		}
+	}
+};
+
+void main() {
+
+	/**************************************************************************
+	1. SVE KLASE TREBAJU POSJEDOVATI ADEKVATAN DESTRUKTOR
+	2. NAMJERNO IZOSTAVLJANJE KOMPLETNIH I/ILI POJEDINIH DIJELOVA DESTRUKTORA KOJI UZROKUJU RUNTIME ERROR CE BITI OZNACENO KAO "RE"
+	3. SPASAVAJTE PROJEKAT KAKO BI SE SPRIJECILO GUBLJENJE URADJENOG ZADATKA
+	4. PROGRAMSKI CODE SE TAKODJER NALAZI U FAJLU code.TXT
+	5. NAZIVI FUNKCIJA MORAJU BITI IDENTIČNI ONIMA KOJI SU KORIŠTENI U TESTNOM CODE-U.OSTALE, POMOĆNE FUNKCIJE MOŽETE IMENOVATI PO ŽELJI. TAKOĐER, MOŽETE DODAVATI KOLIKO ŽELITE TESTNIH PODATAKA
+	****************************************************************************/
+	Datum dat_12_01_2018(12, 1, 2018), dat_01_02_2018(1, 2, 2018);
+	cout << dat_12_01_2018;
+	
+
+Kolekcija<int> kolekcija1;
+	for (size_t i = 0; i < 10; i++)
+		kolekcija1.Dodaj(i);
+//			
+//
+//	cout << kolekcija1.GetElement1(0) << endl;
+//
+//	
+	cout << kolekcija1 << endl;
+//
+//
+	KrvnaGrupa
+		O_poz(O, '+'), O_neg(O, '-'),
+		A_poz(A, '+'), A_neg(A, '-'),
+		B_poz(B, '+'), B_neg(B, '-'),
+		AB_poz(AB, '+'), AB_neg(AB, '-');
+//
+	Kolekcija<KrvnaGrupa> donori_O_poz;
+	donori_O_poz.Dodaj(O_poz);
+	donori_O_poz.Dodaj(A_poz);
+	donori_O_poz.Dodaj(B_poz);
+	donori_O_poz.Dodaj(AB_poz);
+	O_poz.SetDonatori(donori_O_poz);
+//	
+Kolekcija<KrvnaGrupa> primaoci_O_poz;
+	primaoci_O_poz.Dodaj(O_poz);
+	primaoci_O_poz.Dodaj(O_neg);
+	O_poz.SetPrimaoci(primaoci_O_poz);
+//
+	Kolekcija<KrvnaGrupa> donori_A_poz;
+	donori_A_poz.Dodaj(A_poz);
+	donori_A_poz.Dodaj(AB_poz);
+A_poz.SetDonatori(donori_O_poz);
+//
+	Kolekcija<KrvnaGrupa> primaoci_A_poz;
+	primaoci_A_poz.Dodaj(O_poz);
+	primaoci_A_poz.Dodaj(A_poz);
+	primaoci_A_poz.Dodaj(O_neg);
+	primaoci_A_poz.Dodaj(A_neg);
+     A_poz.SetPrimaoci(primaoci_A_poz);
+//
+	 Kolekcija<KrvnaGrupa> donori_B_poz;
+	 donori_B_poz.Dodaj(B_poz);
+	 donori_B_poz.Dodaj(AB_poz);
+	 B_poz.SetDonatori(donori_B_poz);
+
+	 Kolekcija<KrvnaGrupa> primaoci_B_poz;
+	 primaoci_B_poz.Dodaj(O_poz);
+	 primaoci_B_poz.Dodaj(B_poz);
+	 primaoci_B_poz.Dodaj(O_neg);
+	 primaoci_B_poz.Dodaj(B_neg);
+B_poz.SetPrimaoci(primaoci_B_poz);
+
+//	/*
+//	Ispis podataka o krvnoj grupi treba biti u formatu:
+//	-------------------------------------------
+//	Krvna grupa -> 0+
+//	-------------------------------------------
+//	Donori  ->  0+, A+, B+, AB+
+//	Primaoci ->	0+, 0-
+//	-------------------------------------------
+//	*/
+//	//cout << O_poz.Ispis() << endl;
+//
+	Osoba * jasmin = new Donator("Jasmin Azemovic", B_poz, "061-111-222", Datum(12, 2, 2017), true, true);
+	Osoba * adel = new Donator("Adel Handzic", A_neg, "061-222-333", Datum(9, 1, 2017), true, true);
+	Osoba * goran = new Donator("Goran Skondric", B_neg, "061-333-444", Datum(9, 3, 2017), true, true);
+
+//
+TransfuzijskiCentar tcMostar;
+//	/*
+//	prilikom svake donacije je potrebno povecati zalihe za tu krvnu grupu
+//	ukoliko krvna grupa vec postoji na zalihi onda se uvecava samo njena kolicina
+//	takodjer, donatoru se postavlja nova vrijednost datuma posljednje donacije
+//	*/
+//	//datum donacije, donator, kolicina
+	tcMostar.AddDonaciju(Datum(20, 5, 2017), jasmin, 2.5);
+	tcMostar.AddDonaciju(Datum(20, 5, 2017), adel, 3);
+	tcMostar.AddDonaciju(Datum(6, 5, 2017), goran, 1.2);
+//
+//
+	tcMostar.AddDonaciju(Datum(10, 9, 2017), jasmin, 2);
+	tcMostar.AddDonaciju(Datum(18, 10, 2017), adel, 1.8);
+	tcMostar.AddDonaciju(Datum(15, 9, 2017), goran, 3.8);
+	cout << tcMostar;
+
+//
+	Zahtjev zahtjev_0_poz("Tranfuziologija KCUS", Datum(18, 2, 2018), B_poz, 2),
+		zahtjev_0_neg("Tranfuziologija Bakir Nakas", Datum(20, 2, 2018), O_neg, 8);
+//
+//	/*ukoliko transfuzijski centar posjeduje zahtijevane kolicine na stanju, odmah ce ih ustupiti prema zahtjevu,
+//	a u slucaju da ne posjeduje onda ce (koristeci multithreading) kontaktirati (poslati SMS poruku sa odgovarajucim sadrzajem)
+//	sve donore koji zadovoljavaju sljedece uslove:
+//	- mogu donirati krv zahtijevanoj krvnoj grupi
+//	- oznacili su da zele biti kontaktirani
+//	- nisu davali krv u posljednja 3 mjeseca
+//	*/
+	tcMostar.DodajZahtjev(zahtjev_0_poz);
+	tcMostar.DodajZahtjev(zahtjev_0_neg);
+//
+	delete adel;
+	delete jasmin;
+	delete goran;
+system("pause");
+}
